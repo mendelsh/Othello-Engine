@@ -9,51 +9,54 @@ import (
 	"strings"
 )
 
-const depth int = 10
+const depth int = 8
 
-var game = board.NewBoard() // global game state
+var game board.Board = board.NewBoard()
+var botPlayer board.Pengwin = board.NewPengwin(depth, "white")
 
 type MoveRequest struct {
 	Move string `json:"move"`
 }
 
 type BoardResponse struct {
-	Black     uint64 `json:"black"`
-	White     uint64 `json:"white"`
+	Black     string `json:"black"`
+	White     string `json:"white"`
 	BlackTurn bool   `json:"black_turn"`
 }
 
 func moveHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Invalid method", http.StatusMethodNotAllowed)
-		return
-	}
-
 	var req MoveRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request", http.StatusBadRequest)
 		return
 	}
 
-	err := game.Play(req.Move)
-	if err != nil {
+	if err := game.Play(req.Move); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	resp := BoardResponse{
-		Black:     game.Black,
-		White:     game.White,
+		Black:     fmt.Sprintf("%d", game.Black),
+		White:     fmt.Sprintf("%d", game.White),
 		BlackTurn: game.BlackTurn,
 	}
-	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
+
+	if !game.BlackTurn {
+		go func() {
+			x, y, ok := botPlayer.GetMove(&game)
+			if ok {
+				game.PlayXY(x, y)
+			}
+		}()
+	}
 }
 
 func stateHandler(w http.ResponseWriter, r *http.Request) {
 	resp := BoardResponse{
-		Black:     game.Black,
-		White:     game.White,
+		Black:     fmt.Sprintf("%d", game.Black),
+		White:     fmt.Sprintf("%d", game.White),
 		BlackTurn: game.BlackTurn,
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -62,8 +65,9 @@ func stateHandler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	// Choose player types
-	// black := board.NewPengwin(depth, "black")
+	// black := board.NewPengwin(6, "black")
 	// white := board.NewGreedy(depth, "white")
+	// white := board.HumanPlayer{}
 
 	// RunGame(black, white)
 	// ui.LaunchGame()

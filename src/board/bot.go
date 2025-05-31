@@ -148,7 +148,7 @@ func (eval Evaluation) Search(player, opponent uint64, depth int) []Move {
 }
 
 func (eval Evaluation) SelectMove(player, opponent uint64, depth int) (Move, bool) {
-	fmt.Println("\033[1;31mBot play now!\033[0m")
+	// fmt.Println("\033[1;31mBot play now!\033[0m")
 
 	moves := eval.Search(player, opponent, depth)
 	if len(moves) == 0 {
@@ -201,7 +201,10 @@ func (Pengwin) evaluate(player, opponent uint64) int {
 	if gameOver(player, opponent) {
 		return 1000 * (bits.OnesCount64(player) - bits.OnesCount64(opponent))
 	}
-	return bits.OnesCount64(Moves(player, opponent)) - bits.OnesCount64(Moves(opponent, player))
+	flexibility := bits.OnesCount64(Moves(player, opponent)) - bits.OnesCount64(Moves(opponent, player))
+	cp, co := CountStableDiscs(player, opponent)
+	stability := 20 * (cp - co)
+	return flexibility + stability
 }
 
 func (p Pengwin) Score(player, opponent uint64, depth int) int {
