@@ -386,3 +386,4 @@ func (b *Board) PlayRandomMove() error {
 
 	return &InvalidMoveError{Reason: "random move failed"}
 }
+
