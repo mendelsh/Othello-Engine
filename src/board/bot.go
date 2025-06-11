@@ -145,7 +145,7 @@ func (eval Evaluation) Search(player, opponent uint64, depth int) []Move {
 	})
 
 	return movesSlice
-}
+}	
 
 func (eval Evaluation) SelectMove(player, opponent uint64, depth int) (Move, bool) {
 	// fmt.Println("\033[1;31mBot play now!\033[0m")
